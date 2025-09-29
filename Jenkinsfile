@@ -2,30 +2,46 @@ pipeline {
   agent {
     docker {
       image 'docker:20.10.7'
-      args '--user 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
+      args '--entrypoint="" -v /var/run/docker.sock:/var/run/docker.sock -e HOME=/var/jenkins_home -e DOCKER_CONFIG=/var/jenkins_home/.docker'
+      reuseNode true
     }
   }
+
+  options { skipDefaultCheckout(true) }
+  environment { DOCKER_BUILDKIT = '1' }
+
   stages {
     stage('Checkout') {
       steps {
-        git branch: 'main', url: 'https://github.com/aChanathipxCodes/jenkins-demo-app.git'
+        checkout scm
       }
     }
+
     stage('Build Image') {
       steps {
+        sh 'mkdir -p "$DOCKER_CONFIG"'
         sh 'docker build -t jenkins-demo-app:latest .'
       }
     }
-    stage('Run Container') {
-      steps {
-        sh 'docker run -d -p 5000:5000 --name demo-app jenkins-demo-app:latest'
-      }
-    }
+
     stage('Test') {
       steps {
-        sh 'echo "Running tests..."'
-        sh 'pytest || true'
+        sh 'docker run --rm -v "$PWD":/app -w /app jenkins-demo-app:latest pytest -q'
       }
+    }
+
+    stage('Deploy (Run Container)') {
+      steps {
+        sh 'docker rm -f demo-app || true'
+        sh 'docker run -d --restart unless-stopped -p 5000:5000 --name demo-app jenkins-demo-app:latest'
+      }
+    }
+  }
+
+  post {
+    always {
+      sh 'docker ps -a || true'
+      sh 'docker logs demo-app | tail -n 100 || true'
     }
   }
 }
