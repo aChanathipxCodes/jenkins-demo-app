@@ -2,7 +2,7 @@ pipeline {
   agent {
     docker {
       image 'docker:20.10.7'
-      args '--user 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
+      args '-v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
   stages {
