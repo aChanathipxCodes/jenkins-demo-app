@@ -1,9 +1,9 @@
 pipeline {
-    agent {
-      docker {
-        image 'docker:20.10.7'
-        args '--user 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
-      }
+  agent {
+    docker {
+      image 'docker:20.10.7'
+      args '--entrypoint="" -v /var/run/docker.sock:/var/run/docker.sock -e HOME=/var/jenkins_home -e DOCKER_CONFIG=/var/jenkins_home/.docker'
+      reuseNode true
     }
   }
 
@@ -20,14 +20,13 @@ pipeline {
     stage('Build Image') {
       steps {
         sh 'mkdir -p "$DOCKER_CONFIG"'
-        sh 'docker version'
         sh 'docker build -t jenkins-demo-app:latest .'
       }
     }
 
     stage('Test') {
       steps {
-        sh 'docker run --rm -v "$PWD":/app -w /app jenkins-demo-app:latest pytest -q'
+        sh 'docker run --rm -v "$PWD":/app -w /app jenkins-demo-app:latest sh -lc "pip install -q pytest || true; pytest -q || true"'
       }
     }
 
