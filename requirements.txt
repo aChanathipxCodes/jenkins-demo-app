@@ -1,1 +1,4 @@
-flask
+flask==3.0.3
+gunicorn==22.0.0
+pytest==8.4.1
+PyYAML==6.0.2
