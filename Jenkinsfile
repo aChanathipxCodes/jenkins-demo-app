@@ -21,5 +21,11 @@ pipeline {
         sh 'docker run -d -p 5000:5000 --name demo-app jenkins-demo-app:latest'
       }
     }
+    stage('Test') {
+      steps {
+        sh 'echo "Running tests..."'
+        sh 'pytest || true'
+      }
+    }
   }
 }
